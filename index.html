@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 3 Practice Test – Disease & Homeostasis</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --border: #334155;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header { width: 100%; max-width: 720px; text-align: center; margin-bottom: 1.5rem; }
+h1 { font-size: 1.6rem; font-weight: 700; }
+.subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem; }
+.progress-wrap { width: 100%; max-width: 720px; margin-bottom: 1.25rem; }
+.progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+.progress-bar { height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); width: 0%; transition: width 0.3s ease; }
+.quiz-container { width: 100%; max-width: 720px; }
+.question-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.q-num { font-size: 0.8rem; color: var(--accent); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+.q-text { font-size: 1.15rem; font-weight: 600; line-height: 1.4; margin-bottom: 1rem; }
+.options { display: flex; flex-direction: column; gap: 0.5rem; }
+.option {
+  background: #0f172a;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.option:hover { border-color: var(--accent); }
+.option.selected { border-color: var(--accent); background: rgba(56,189,248,0.1); }
+.option.correct { border-color: var(--success); background: rgba(34,197,94,0.15); }
+.option.incorrect { border-color: var(--danger); background: rgba(239,68,68,0.15); }
+.match-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.match-col { display: flex; flex-direction: column; gap: 0.5rem; }
+.match-item {
+  background: #0f172a;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.match-item.selected { border-color: var(--accent); }
+.match-item.matched { border-color: var(--success); background: rgba(34,197,94,0.15); opacity: 0.8; }
+.match-item.wrong { border-color: var(--danger); }
+.controls { width: 100%; max-width: 720px; display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+button {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: #0f172a; }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.results { text-align: center; padding: 2rem 1rem; display: none; }
+.results h2 { color: var(--success); margin-bottom: 0.5rem; font-size: 1.8rem; }
+.score { font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0; }
+.feedback { color: var(--muted); margin-bottom: 1.5rem; }
+@media (max-width: 600px) {
+  .match-container { grid-template-columns: 1fr; }
+  .q-text { font-size: 1.05rem; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Unit 3 Practice Test</h1>
+  <p class="subtitle">Disease & Homeostasis – Multiple Choice + Matching</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span>Progress</span><span id="progress-text">0 / 0</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="quiz-container" id="quiz"></div>
+
+<div class="controls" id="controls">
+  <button class="btn-secondary" id="prev" disabled>Previous</button>
+  <button class="btn-primary" id="next">Next</button>
+  <button class="btn-outline" id="submit" style="display:none;">Submit Test</button>
+</div>
+
+<div class="results" id="results">
+  <h2>Test Complete!</h2>
+  <div class="score" id="score">0%</div>
+  <p class="feedback" id="feedback"></p>
+  <button class="btn-primary" id="retry">Try Again</button>
+</div>
+
+<script>
+const questions = [
+  {
+    type: "mc",
+    q: "In humans, body cells are diploid. How many chromosomes do they have?",
+    options: ["23", "46", "92", "44"],
+    answer: 1,
+    explain: "Diploid = 46 chromosomes (23 pairs). Haploid gametes have 23."
+  },
+  {
+    type: "mc",
+    q: "What happens during S phase of interphase?",
+    options: ["Cell divides", "DNA is replicated", "Chromosomes line up", "Nuclear membrane dissolves"],
+    answer: 1,
+    explain: "S = Synthesis. DNA is copied so each new cell gets a full set."
+  },
+  {
+    type: "mc",
+    q: "During which phase do chromosomes line up at the equatorial plane?",
+    options: ["Prophase", "Metaphase", "Anaphase", "Telophase"],
+    answer: 1,
+    explain: "Metaphase = middle. Chromosomes line up in the middle."
+  },
+  {
+    type: "mc",
+    q: "What is the main job of spindle fibers?",
+    options: ["Replicate DNA", "Pull chromosomes apart", "Make the cell membrane", "Produce ATP"],
+    answer: 1,
+    explain: "Spindle fibers attach to centromeres and pull sister chromatids to opposite poles."
+  },
+  {
+    type: "mc",
+    q: "Why do elephants rarely get cancer?",
+    options: ["They have no cells that can mutate", "They have about 20 copies of the TP53 tumor-suppressor gene", "They never get DNA damage", "Their cells never divide"],
+    answer: 1,
+    explain: "Extra copies of TP53 make elephant cells more likely to die if DNA is damaged."
+  },
+  {
+    type: "mc",
+    q: "What is chromatin?",
+    options: ["A condensed chromosome ready for mitosis", "Uncoiled DNA found during interphase", "A protein that kills cancer cells", "The membrane around the nucleus"],
+    answer: 1,
+    explain: "Chromatin is the loose, uncoiled form of DNA."
+  },
+  {
+    type: "mc",
+    q: "What is diffusion?",
+    options: ["Movement of water across a membrane", "Movement of particles from high to low concentration", "Active transport using ATP", "Cell bursting from too much water"],
+    answer: 1,
+    explain: "Particles move down their concentration gradient."
+  },
+  {
+    type: "mc",
+    q: "What is osmosis?",
+    options: ["Movement of any molecule from high to low concentration", "Movement of water across a semi-permeable membrane", "Using transport proteins to move large molecules", "The cell membrane dissolving"],
+    answer: 1,
+    explain: "Osmosis is specifically the movement of water."
+  },
+  {
+    type: "mc",
+    q: "A cell is placed in a hypotonic solution. What happens?",
+    options: ["Water leaves the cell and it shrinks", "Water enters the cell and it swells", "No net movement of water", "The cell immediately dies"],
+    answer: 1,
+    explain: "Hypotonic = lower solute outside. Water enters the cell."
+  },
+  {
+    type: "mc",
+    q: "What is cytolysis?",
+    options: ["A cell shrinking in a hypertonic solution", "An animal cell bursting after taking in too much water", "The formation of a cleavage furrow", "DNA replication"],
+    answer: 1,
+    explain: "Cytolysis is when an animal cell swells and bursts in a hypotonic solution."
+  },
+  {
+    type: "mc",
+    q: "What is diabetes?",
+    options: ["A disease that only affects the lungs", "A chronic condition where blood sugar is too high", "A type of cancer", "A problem only with the nervous system"],
+    answer: 1,
+    explain: "Diabetes involves chronically high blood glucose."
+  },
+  {
+    type: "mc",
+    q: "Why does diabetes cause thirst and frequent urination?",
+    options: ["The body stops making water", "High blood glucose pulls water into the urine", "The kidneys stop working completely", "Insulin makes you thirsty"],
+    answer: 1,
+    explain: "Excess glucose draws water out with the urine, causing dehydration and thirst."
+  },
+  {
+    type: "mc",
+    q: "What is a negative feedback loop?",
+    options: ["The product increases the process that creates it", "The product decreases the process that creates it, returning toward a set point", "A process that never stops", "A loop that only happens in cancer cells"],
+    answer: 1,
+    explain: "Negative feedback opposes the change and stabilizes the system."
+  },
+  {
+    type: "mc",
+    q: "What is homeostasis?",
+    options: ["The process of cell division", "A balance maintained between a cell or organism and its environment", "The movement of water across a membrane", "Uncontrolled cell growth"],
+    answer: 1,
+    explain: "Homeostasis is maintaining stable internal conditions."
+  },
+  {
+    type: "mc",
+    q: "Which system breaks down food into absorbable units?",
+    options: ["Urinary", "Digestive", "Respiratory", "Nervous"],
+    answer: 1,
+    explain: "The digestive system processes food."
+  },
+  {
+    type: "match",
+    q: "Match each cell cycle phase to what happens during it.",
+    pairs: [
+      { left: "Prophase", right: "Nuclear membrane dissolves; chromosomes condense; spindle forms" },
+      { left: "Metaphase", right: "Chromosomes line up at the equatorial plane" },
+      { left: "Anaphase", right: "Sister chromatids are pulled to opposite poles" },
+      { left: "Telophase", right: "Nuclear membranes re-form; chromosomes unwind" }
+    ]
+  },
+  {
+    type: "match",
+    q: "Match each solution type to its effect on a cell.",
+    pairs: [
+      { left: "Isotonic", right: "No net water movement" },
+      { left: "Hypertonic", right: "Water leaves the cell; cell shrinks" },
+      { left: "Hypotonic", right: "Water enters the cell; cell swells" }
+    ]
+  },
+  {
+    type: "match",
+    q: "Match each body system to its main role in homeostasis.",
+    pairs: [
+      { left: "Respiratory", right: "Supplies blood with oxygen and removes carbon dioxide" },
+      { left: "Urinary", right: "Eliminates waste and regulates water balance" },
+      { left: "Endocrine", right: "Glands secrete hormones that regulate substances like insulin" },
+      { left: "Cardiovascular", right: "Transports blood, nutrients, and waste" }
+    ]
+  }
+];
+
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+
+const quizEl = document.getElementById('quiz');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const submitBtn = document.getElementById('submit');
+const controls = document.getElementById('controls');
+const results = document.getElementById('results');
+const scoreEl = document.getElementById('score');
+const feedbackEl = document.getElementById('feedback');
+const retryBtn = document.getElementById('retry');
+
+function updateProgress() {
+  const answered = answers.filter(a => a !== null).length;
+  const pct = (answered / questions.length) * 100;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = `${answered} / ${questions.length}`;
+  prevBtn.disabled = current === 0;
+  nextBtn.style.display = current < questions.length - 1 ? 'block' : 'none';
+  submitBtn.style.display = current === questions.length - 1 ? 'block' : 'none';
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  let html = `<div class="question-card">
+    <div class="q-num">Question ${current + 1} of ${questions.length}</div>
+    <div class="q-text">${q.q}</div>`;
+
+  if (q.type === 'mc') {
+    html += '<div class="options">';
+    q.options.forEach((opt, i) => {
+      const selected = answers[current] === i ? 'selected' : '';
+      html += `<div class="option ${selected}" data-idx="${i}">${opt}</div>`;
+    });
+    html += '</div>';
+  } else if (q.type === 'match') {
+    const lefts = q.pairs.map(p => p.left);
+    const rights = [...q.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
+    html += `<div class="match-container">
+      <div class="match-col" id="left-col">
+        ${lefts.map((l, i) => `<div class="match-item" data-side="left" data-idx="${i}">${l}</div>`).join('')}
+      </div>
+      <div class="match-col" id="right-col">
+        ${rights.map((r, i) => `<div class="match-item" data-side="right" data-text="${r}">${r}</div>`).join('')}
+      </div>
+    </div>
+    <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--muted);">Click one item on the left, then one on the right to match them.</p>`;
+  }
+
+  html += '</div>';
+  quizEl.innerHTML = html;
+
+  if (q.type === 'mc') {
+    quizEl.querySelectorAll('.option').forEach(el => {
+      el.addEventListener('click', () => {
+        answers[current] = parseInt(el.dataset.idx);
+        quizEl.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        updateProgress();
+      });
+    });
+  }
+
+  if (q.type === 'match') {
+    let selectedLeft = null;
+    quizEl.querySelectorAll('.match-item').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.side === 'left') {
+          quizEl.querySelectorAll('[data-side="left"]').forEach(i => i.classList.remove('selected'));
+          el.classList.add('selected');
+          selectedLeft = el;
+        } else if (el.dataset.side === 'right' && selectedLeft) {
+          const leftIdx = parseInt(selectedLeft.dataset.idx);
+          const rightText = el.dataset.text;
+          const correctRight = q.pairs[leftIdx].right;
+          if (rightText === correctRight) {
+            selectedLeft.classList.add('matched');
+            el.classList.add('matched');
+            selectedLeft.classList.remove('selected');
+            selectedLeft = null;
+            if (!answers[current]) answers[current] = [];
+            answers[current][leftIdx] = true;
+            if (answers[current].filter(Boolean).length === q.pairs.length) {
+              answers[current] = 'complete';
+            }
+          } else {
+            el.classList.add('wrong');
+            setTimeout(() => el.classList.remove('wrong'), 600);
+          }
+          updateProgress();
+        }
+      });
+    });
+  }
+
+  updateProgress();
+}
+
+prevBtn.addEventListener('click', () => {
+  if (current > 0) { current--; renderQuestion(); }
+});
+
+nextBtn.addEventListener('click', () => {
+  if (current < questions.length - 1) { current++; renderQuestion(); }
+});
+
+submitBtn.addEventListener('click', () => {
+  let correct = 0;
+  questions.forEach((q, i) => {
+    if (q.type === 'mc' && answers[i] === q.answer) correct++;
+    if (q.type === 'match' && answers[i] === 'complete') correct++;
+  });
+  const pct = Math.round((correct / questions.length) * 100);
+  scoreEl.textContent = `${pct}%`;
+  feedbackEl.textContent = `You got ${correct} out of ${questions.length} correct.`;
+  quizEl.style.display = 'none';
+  controls.style.display = 'none';
+  results.style.display = 'block';
+});
+
+retryBtn.addEventListener('click', () => {
+  answers = new Array(questions.length).fill(null);
+  current = 0;
+  results.style.display = 'none';
+  quizEl.style.display = 'block';
+  controls.style.display = 'flex';
+  renderQuestion();
+});
+
+renderQuestion();
+</script>
+</body>
+</html>
